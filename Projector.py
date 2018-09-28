@@ -27,11 +27,10 @@ class Projector:
         self.world_detectorsize = self.calc_detectorwidth()
 
     def create_sinogramme(self):
-
         # create an array holding all theatas
         thetas = self.calc_angles()
         # compute sampling points along rotated basis (thetas, s, sampling points for integral)
-        sampling_points = np.zeros((self.no_pro, self.res, self.integral_sampling_size))
+        sampling_points = np.zeros((self.no_pro, self.res, self.integral_sampling_rate))
 
         # sum over sampling points to emulate integral
         sino = np.sum(sampling_points, axis=2)
@@ -42,7 +41,7 @@ class Projector:
 
     def calc_detectorwidth(self):
         # in theory the detector should be at least as large as the diagonal picture
-        return self.volume.
+        return np.sqrt(np.sum(np.power(self.volume.world_dimensions, 2)))
 
 
 if __name__ == "__main__":
