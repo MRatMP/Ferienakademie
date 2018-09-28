@@ -34,9 +34,7 @@ class Container:
 
 
 if __name__ == '__main__':
-    a = Container(data=np.eye(2),dimension=2,sizePerDimension=np.array([2,2]),spacingPerDimension=np.array([1,1]))
-    print('{} \n {}'.format(a.data,a.interpolation_2d(a.pixel_to_world(np.array([0.75,0])))))
+    a = Container(data=np.eye(2),spacing=0.1)
+    print('{}        {}'.format(a.data,a.interpolation_2d(a.pixel_to_world(np.array([0.75,0])))))
    # print(a.pixel_to_world(np.array([0.5,0.5])))
     #print(a.origin)
-    print()
-    print(a.interpolation_nd(a.pixel_to_world(np.array([0.75,0]))))

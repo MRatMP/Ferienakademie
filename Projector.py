@@ -11,7 +11,8 @@ class sinogramme:
 
     def show(self):
         plt.imshow(self.sgram)
-        plt.axis('on')
+        plt.axis(self.x_axis[0], self.x_axis[-1], self.y_axis[0], self.y_axis[-1])
+        plt.xlabel('theta')
         plt.show()
 
 
@@ -29,12 +30,17 @@ class Projector:
     def create_sinogramme(self):
         # create an array holding all theatas
         thetas = self.calc_angles()
+
         # compute sampling points along rotated basis (thetas, s, sampling points for integral)
-        sampling_points = np.zeros((self.no_pro, self.res, self.integral_sampling_rate))
+        ray_locations = self.calc_sampling_points(thetas)
+
+        # interpolate data for every sampling point along the rays
+        ray_integral_samples = self.get_values_for_points(ray_locations)
 
         # sum over sampling points to emulate integral
-        sino = np.sum(sampling_points, axis=2)
-        return sinogramme(sino, x_thetas=thetas, y_integral=self.res)
+        sino = np.sum(ray_integral_samples, axis=2)
+
+        return sinogramme(data=sino, x_thetas=thetas, y_integral=self.res)
 
     def calc_angles(self):
         return np.arange(self.phi1, self.phi2, (self.phi2-self.phi1)/self.no_pro)
@@ -42,6 +48,12 @@ class Projector:
     def calc_detectorwidth(self):
         # in theory the detector should be at least as large as the diagonal picture
         return np.sqrt(np.sum(np.power(self.volume.world_dimensions, 2)))
+
+    def calc_sampling_points(self, thetas):
+        pass
+
+    def get_values_for_points(ray_locations):
+        pass
 
 
 if __name__ == "__main__":
