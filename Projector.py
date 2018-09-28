@@ -50,6 +50,7 @@ class Projector:
         return np.sqrt(np.sum(np.power(self.volume.world_dimensions, 2)))
 
     def calc_sampling_points(self, thetas):
+        # resulting array must be in form (theta, ray no, 
         pass
 
     def get_values_for_points(ray_locations):
