@@ -1,11 +1,11 @@
 import numpy as np
-
+import matplotlib.pyplot as plt
 class Container:
 
     def __init__(self, data, spacing):
-        self.data = data
+        self.data = self.preprocess(data)
         self.spacing = spacing
-        self.pixel_dimension = np.array(data.shape)
+        self.pixel_dimension = np.array(self.data.shape)
         self.world_dimensions = self.pixel_dimension * spacing
         self.origin = - 0.5 *((self.pixel_dimension - 1) * spacing)
 
@@ -22,15 +22,30 @@ class Container:
         assert world_coordinates.shape == (2,)
         pixel_coordinates = self.world_to_pixel(world_coordinates)
         # handle outside pixels
-        if np.min(pixel_coordinates) < 0 or not np.all(np.greater(self.pixel_dimension, pixel_coordinates)):
+        if np.min(pixel_coordinates) < 0 or np.any(np.greater_equal(np.ceil(pixel_coordinates), self.pixel_dimension)):
             return 0
         x1, y1 = np.floor(pixel_coordinates).astype('int')
         x2, y2 = np.ceil(pixel_coordinates).astype('int')
+        #if x1 > self.pixel_dimension[0] or x2 >self.pixel_dimension[0] or y1 > self.pixel_dimension[1] or y2 >
         f1, f2, f3, f4 = self.data[x1, y1],  self.data[x2, y1], self.data[x2, y2], self.data[x1, y2]
         i1 = np.interp(world_coordinates[0], [x1, x2], [f1, f2])
         i2 = np.interp(world_coordinates[0], [x1, x2], [f3, f4])
         res = np.interp(world_coordinates[1], [y1, y2], [i1, i2])
         return res
+
+    def inverse_interpolate(self):
+
+
+    def show(self):
+        plt.imshow(self.data)
+        plt.show()
+
+    def preprocess(self, data):
+        if len(data.shape) == 3:
+            return data[:,:,0]
+        return data
+
+
 
 
 if __name__ == '__main__':
