@@ -105,13 +105,17 @@ class Projector:
         if len(self.sino.shape) == 3:
             self.sino = self.sino[:, :, 0]
 
+    def show_sino(self):
+        assert self.sino is not None
+
+
 
 if __name__ == "__main__":
     pyc.setup_pyconrad(max_ram='2G')
     _ = pyc.ClassGetter('edu.stanford.rsl.tutorial.phantoms')
-    shep_logan = _.SheppLogan(512, False).as_numpy()
+    shep_logan = _.SheppLogan(256, False).as_numpy()
     container = imgContainer.Container(data=shep_logan, spacing=1)
-    test_proj = Projector(container, detector_resolution=512, sampling=700)
-    #test_proj.forwardproject()
-    test_proj.load_image('../sinogramme.jpeg')
-    test_proj.backwardproject()
+    test_proj = Projector(container, detector_resolution=1.5*256, sampling=1.5*256)
+    test_proj.forwardproject()
+    #test_proj.load_image('../sinogramme.jpeg')
+    #test_proj.backwardproject()
