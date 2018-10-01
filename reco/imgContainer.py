@@ -33,7 +33,14 @@ class Container:
         res = np.interp(world_coordinates[1], [y1, y2], [i1, i2])
         return res
 
-    def inverse_interpolate(self):
+    '''
+    immer invertieren wo man herkommt
+    '''
+    def inverse_interpolate(self, world_coordinates, value):
+        inter_pixels = self.world_to_pixel(world_coordinates)
+        x1, y1 = np.floor(inter_pixels).astype('int')
+        x2, y2 = np.ceil(inter_pixels).astype('int')
+
 
 
     def show(self):

@@ -1,38 +1,52 @@
-import ImageContainer
+import reco.imgContainer as imgContainer
 import numpy as np
-import matplotlib.image as img
 import matplotlib.pyplot as plt
 import pyconrad as pyc
-import sys
 from joblib import Parallel, delayed
-
-class sinogramme:
-    def __init__(self, x_thetas, y_integral, data):
-        self.x_axis = x_thetas
-        self.y_axis = y_integral
-        self.sgram = data
-
-    def show(self):
-        plt.imsave('sinogramme.jpeg', self.sgram.T)
-        pyc.imshow(self.sgram.T, 'sinogramme')
-
-
 
 class Projector:
 
     def __init__(self, volume, detector_resolution, phi1=0, phi2=np.pi, number_projections=180, sampling=500):
+        # exist upon initialization
         self.volume = volume
-        self.phi1 = phi1
-        self.phi2 = phi2
-        self.no_pro = number_projections
-        self.res = detector_resolution
+        self.res = detector_resolution              # s
+        self.phi1, self.phi2 = phi1, phi2
+        self.no_angles = number_projections
+        self.thetas = self.calc_angles()
         self.sampling = sampling
         self.world_detectorsize = self.calc_detectorwidth()
+        # exist after foreward_projection
+        self.sino = None
+        # exist after backwardprojection
+        self.reco = None
 
 
-    def create_sinogramme(self):
+    def backwardproject(self):
+        assert self.sino is not None
+        unitvectors = np.zeros((len(self.thetas), 2))
+        for i, t in enumerate(self.thetas):
+            u = np.array((np.cos(t), np.sin(t)))
+            u /= np.sqrt(np.sum(np.power(u, 2)))
+            unitvectors[i, :] = u
+        #unitvectors.reshape(9, 20, 2)
+        back_proj_t = Parallel(n_jobs=-2, verbose=10)(delayed(self.smear_back)(u) for u in unitvectors)
+        self.reco = np.sum(back_proj_t, axis=2)
+
+    '''
+    calculate the backprojection per detector_position on the whole image
+    '''
+    def smear_back(self, u):
+        reco = np.zeros_like(self.volume.data)
+        for x, y, p in np.ndenumerate(reco):
+            reco[x, y] = 1
+        return reco
+
+
+    def forwardproject(self):
+        assert self.volume.data
         # create an array holding all theatas
-        thetas = self.calc_angles()
+
+        thetas = self.thetas
 
         # compute sampling points along rotated basis (thetas, s, sampling points for integral)
         # interpolate data for every sampling point along the rays
@@ -44,16 +58,16 @@ class Projector:
 
 
         #ray_integral_samples = integrate_lines(thetas, detectorpoints)
-        ray_integral_samples = np.array(ray_integral_samples).reshape((self.no_pro, self.res, self.sampling))
+        ray_integral_samples = np.array(ray_integral_samples).reshape((self.no_angles, self.res, self.sampling))
 
         # sum over sampling points to emulate integral
         sinog = np.sum(ray_integral_samples, axis=2)
         sinog = sinog/np.max(sinog)
 
-        return sinogramme(data=sinog, x_thetas=thetas, y_integral=self.res)
+        self.sino = sinog
 
     def calc_angles(self):
-        return np.arange(self.phi1, self.phi2, (self.phi2-self.phi1)/self.no_pro)
+        return np.arange(self.phi1, self.phi2, (self.phi2-self.phi1) / self.no_angles)
 
     def calc_detectorwidth(self):
         # in theory the detector should be at least as large as the diagonal picture
@@ -86,13 +100,18 @@ class Projector:
                     values[i, s, no] = self.volume.interpolation_2d((x_integ, y_integ))
         return values
 
+    def load_image(self, name):
+        self.sino = plt.imread(name)
+        if len(self.sino.shape) == 3:
+            self.sino = self.sino[:, :, 0]
 
 
 if __name__ == "__main__":
     pyc.setup_pyconrad(max_ram='2G')
     _ = pyc.ClassGetter('edu.stanford.rsl.tutorial.phantoms')
     shep_logan = _.SheppLogan(512, False).as_numpy()
-    container = ImageContainer.Container(data=shep_logan, spacing=1)
+    container = imgContainer.Container(data=shep_logan, spacing=1)
     test_proj = Projector(container, detector_resolution=512, sampling=700)
-    sino = test_proj.create_sinogramme()
-    sino.show()
+    #test_proj.forwardproject()
+    test_proj.load_image('../sinogramme.jpeg')
+    test_proj.backwardproject()
